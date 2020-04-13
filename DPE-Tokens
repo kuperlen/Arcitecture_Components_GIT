@@ -1,0 +1,9 @@
+{
+	"DPE_TOKEN": "MOhK[KU#78#}Vi",
+	"DPE_APPID": "DPE_1011",
+	"APP_ENV_NAME": "sbx3dev",
+	"secrets": [{
+		"name": "TLS_Cert",
+		"value": "Certificates"
+	}]
+}
