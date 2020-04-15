@@ -1,9 +1,18 @@
 {
 	"DPE_TOKEN": "MOhK[KU#78#}Vi",
-	"DPE_APPID": "DPE_1011",
+	"DPE_APPID": "dpe1011",
 	"APP_ENV_NAME": "sbx3dev",
-	"secrets": [{
-		"name": "TLS_Cert",
-		"value": "Certificates"
-	}]
+	"DPE_URL": "https://secretmanager-sbx3.cloud.statestreetlabs.com",
+	"secrets": [
+	    {
+		    "name": "tls-certs",
+		    "origin": "../certs/fullchain.cer",
+		    "dest": "../proxy/certs/fullchain.pem"
+		},
+	    {
+	        "name": "priv-key",
+            "origin": "../certs/privkey.cer",
+            "dest": "../proxy/certs/privkey.pem"
+	    }
+	]
 }
