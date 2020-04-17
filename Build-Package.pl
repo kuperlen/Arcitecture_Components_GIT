@@ -7,8 +7,11 @@ use JSON qw( );
 use JSON::MaybeXS ();
 
 sub SaveSecret {
-    my ($sec_name, $sec_dest, $json_repl) = @_;
-    print "Save new secret: $sec_name $json_repl to $sec_dest\n";
+    my ($sec_dest, $json_repl) = @_;
+    my $secret = $json_repl->{Value};
+    print "Save new secret: Value $secret to $sec_dest\n";
+    open (SF, '>', $sec_dest) or die $!;
+    print SF $secret;
 }
 
 sub CreateSecret {
@@ -63,7 +66,7 @@ sub AddSecret {
 
 sub RetrieveSecret{
     my ($sec_name, $sec_orig_loc, $sec_dest, $add_response) = @_;
-#    print "DPE_URL ".$dpe_url."; Env_Name ".$env_name."; App_id ".$app_id."; Token ".$token."; secret-name ". $sec_name."; secret-value ".$sec_orig_loc."\n";
+    print "DPE_URL ".$dpe_url."; Env_Name ".$env_name."; App_id ".$app_id."; Token ".$token."; secret-name ". $sec_name."; secret-location ".$sec_orig_loc."\n";
     # perform a secret fetch, if none returned, add the secret to DBE SM.
     my $json_repl;
     if (!$add_response) {
@@ -87,7 +90,7 @@ sub RetrieveSecret{
             sleep 1;
         } else {die("Failed to retrieve $sec_name from DPE_Secrets_Manager with status: $status_type $!\n");}
     } else {
-        SaveSecret ($sec_name, $sec_dest, $json_repl);
+        SaveSecret ($sec_dest, $json_repl);
     }
 }
 
@@ -103,7 +106,7 @@ my $json_tokens = JSON->new;
 my $data = $json_tokens->decode($dpe_tokens_text);
 
 local $token = $data->{DPE_TOKEN};
-local$app_id = $data->{DPE_APP_ID};
+local $app_id = $data->{DPE_APP_ID};
 local $env_name = $data->{APP_ENV_NAME};
 local $env_class = $data->{DPE_ENV_CLASS};
 local $release_id = $data->{DPE_RELEASE_ID};
@@ -112,12 +115,7 @@ local $dpe_url = $data->{DPE_URL};
 local $dpe_retries = $data->{DPE_RETRIES};
 local $retries = 0;
 
-my $secrets = $data->{secrets};
-
 #while ( my ($k,$v) = each %$data ) { print "$k => $v\n"; }
 for ( @{$data->{secrets}} ) {
-#    print $_->{name}."\n";
-#    print $_->{value}."\n";
     RetrieveSecret($_->{"name"}, $_->{"origin"}, $_->{"dest"});
-
 }
