@@ -1,6 +1,7 @@
 {
 	"DPE_TOKEN": "MOhK[KU#78#}Vi",
-	"DPE_APP_ID": "DPE1011",
+	"DPE_APP_ID": "DPE_1011",
+        "DPE_APP_URL" : "dpe1011",
 	"APP_ENV_NAME": "SBX3DEV",
 	"DPE_ENV_CLASS": "SBX",
 	"DPE_RELEASE_ID": "REL_000010",

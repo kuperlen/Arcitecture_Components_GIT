@@ -15,7 +15,7 @@ sub SaveSecret {
 }
 
 sub CreateSecret {
-    my ($sec_type, $sec_value) = @_;
+    my ($sec_value) = @_;
     my $secret = {
         Type => 'TextBlob',
         Value => $sec_value,
@@ -28,14 +28,14 @@ sub CreateSecret {
         },
     };
     my $secret_json = JSON::MaybeXS::encode_json $secret;
-#    print $secret_json."\n";
+    print "SECRET JSON: ".$secret_json."\n";
     return $secret_json;
 
 }
 
 sub AddSecret {
     my ($sec_name, $sec_orig_loc) = @_;
-#    print "Add new secret: $sec_name from $sec_orig_loc\n";
+    print "Add new secret: $sec_name from $sec_orig_loc\n";
     my $orig_sec = $sec_orig_loc;
     my $sec_value = do {
         open(my $sec_fh, "<:encoding(UTF-8)", $orig_sec)
@@ -43,44 +43,44 @@ sub AddSecret {
         local $/;
         <$sec_fh>
     };
-#    print "Orig_Secret: $sec_value\n";
-    my $secret_json = CreateSecret($sec_type, $sec_value);
+    print "Orig_Secret: $sec_value\n";
+    my $secret_json = CreateSecret($sec_value);
     #save the secret to DBE SM.
 #    my $command = "--insecure $dpe_url/secret/$app_id-$env_name-$sec_name -H \"Authorization: Bearer $token\"";
-    my $command = "--insecure $dpe_url/secret/$app_id-$env_name-$sec_name -H \"Authorization: Bearer $token\" -H \"Content-Type: application/json\" -X POST -d $secret_json";
-#    print $command."\n";
-    #my $response_json = `curl $command`;
-    ########TEST ONLY - secret response stub#######
-    my $response_stub = {
-        ResponseMetadata => {
-            Status          => "SUCCESS",
-            RequestId       => "01ddbaee-72f2-42c1-8bcf-ab2ee50e5fc7",
-        },
-        Value => "-----BEGIN CERTIFICATE-----\ntesttesttesttesttesttesttsest\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\ntesttesttesttesttesttesttsest\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\ntesttesttesttesttesttesttsest\n-----END CERTIFICATE-----\n",
-    };
-    my $response_json = JSON::MaybeXS::encode_json $response_stub;
-    ########TEST ONLY - secret response stub#######
-#    print "ADD SECRET RESPONSE JSON: ".$response_json."\n";
+    my $command = "--insecure $dpe_url/secret/".lc ($app_url)."-".lc ($env_name)."-".lc ($sec_name)." -H \"Content-Type: application/json\" -H \"Authorization: Bearer $token\" -d \'$secret_json\'";    
+print "ADD SECRET COMMAND: ".$command."\n";
+    my $response_json = `curl -X POST $command`;
+#    ########TEST ONLY - secret response stub#######
+#    my $response_stub = {
+#        ResponseMetadata => {
+#            Status          => "SUCCESS",
+#            RequestId       => "01ddbaee-72f2-42c1-8bcf-ab2ee50e5fc7",
+#        },
+#        Value => "-----BEGIN CERTIFICATE-----\ntesttesttesttesttesttesttsest\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\ntesttesttesttesttesttesttsest\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\ntesttesttesttesttesttesttsest\n-----END CERTIFICATE-----\n",
+#    };
+#    my $response_json = JSON::MaybeXS::encode_json $response_stub;
+#    ########TEST ONLY - secret response stub#######
+    print "ADD SECRET RESPONSE JSON: ".$response_json."\n";
     return $response_json;
 }
 
 sub RetrieveSecret{
     my ($sec_name, $sec_orig_loc, $sec_dest, $add_response) = @_;
-    print "DPE_URL ".$dpe_url."; Env_Name ".$env_name."; App_id ".$app_id."; Token ".$token."; secret-name ". $sec_name."; secret-location ".$sec_orig_loc."\n";
+    print "DPE_URL: ".$dpe_url."; Env_Name ".$env_name."; App_id ".$app_id."; Token ".$token."; secret-name ". $sec_name."; secret-location ".$sec_orig_loc."\n";
     # perform a secret fetch, if none returned, add the secret to DBE SM.
     my $json_repl;
     if (!$add_response) {
-        my $command = "--insecure $dpe_url/secret/$app_id-$env_name-$sec_name -H \"Authorization: Bearer $token\"";
-#        print $command . "\n";
-        #my $response = `curl $command`;
-        my $response = '{"ResponseMetadata": {"Status": "FAILURE", "Error": {"Type": "SecretNotFound"}, "RequestId": "ac7e53cd-cc58-43c9-b676-23b965042a72"}}';
-#        print "RETRIEVE REQUEST RESPONSE :" . $response . "\n";
+    my $command = "--insecure $dpe_url/secret/".lc ($app_url)."-".lc ($env_name)."-".lc ($sec_name)." -H \"Authorization: Bearer $token\"";        
+    print "COMMAND TO RETRIEVE SECRET: ".$command."\n";
+        my $response = `curl $command`;
+#        my $response = '{"ResponseMetadata": {"Status": "FAILURE", "Error": {"Type": "SecretNotFound"}, "RequestId": "ac7e53cd-cc58-43c9-b676-23b965042a72"}}';
+        print "RETRIEVE REQUEST RESPONSE :" . $response . "\n";
         $json_repl = JSON->new->utf8->decode($response);
     } else {
         $json_repl = JSON->new->utf8->decode($add_response);
     }
     my $resp_status = $json_repl->{ResponseMetadata}->{Status};
-    print "Status: ".$resp_status."\n";
+    print "RETRIEVE SECRET STATUS: ".$resp_status."\n";
     if ($resp_status eq "FAILURE") {
         $status_type = $json_repl->{ResponseMetadata}->{Error}->{Type};
         if (($status_type eq "SecretNotFound") && ($retries < $dpe_retries)) {
@@ -107,6 +107,7 @@ my $data = $json_tokens->decode($dpe_tokens_text);
 
 local $token = $data->{DPE_TOKEN};
 local $app_id = $data->{DPE_APP_ID};
+local $app_url = $data->{DPE_APP_URL};
 local $env_name = $data->{APP_ENV_NAME};
 local $env_class = $data->{DPE_ENV_CLASS};
 local $release_id = $data->{DPE_RELEASE_ID};
